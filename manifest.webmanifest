@@ -1,0 +1,2 @@
+{"name":"Adam Nokia Electronics","short_name":"Adam Nokia","description":"Management system for Adam Nokia Electronics","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#E3ECF8","theme_color":"#064797",
+"icons":[{"src":"assets/icons/AdamNokia_icon_192x192.png","sizes":"192x192","type":"image/png"},{"src":"assets/icons/AdamNokia_icon_512x512.png","sizes":"512x512","type":"image/png"},{"src":"assets/icons/AdamNokia_icon_512x512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
