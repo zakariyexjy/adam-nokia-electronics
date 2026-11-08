@@ -16,33 +16,6 @@
     async del(k) { const d = await this.open(); return new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = res; }); }
   };
   let token = localStorage.getItem('ane_token'), S = null, D = null, route = 'dashboard', queue = [];
-  let deferredInstallPrompt = null, appInstalled = false;
-  const standalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; bindInstallButton(); });
-  window.addEventListener('appinstalled', () => { appInstalled = true; deferredInstallPrompt = null; bindInstallButton(); });
-  function installHelp() {
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const body = ios
-      ? '<p>On your iPhone or iPad:</p><ol><li>Open this website in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (the square with an upward arrow).</li><li>Scroll down and choose <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>'
-      : '<p>On Android:</p><ol><li>Open this website in <b>Chrome</b>.</li><li>Tap the three-dot menu in the top-right corner.</li><li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li><li>Confirm the installation.</li></ol><p class="muted sm">If you do not see the option, refresh the page and try again in Chrome.</p>';
-    modal('<h2>Install Adam Nokia Electronics</h2>' + body + '<button class="btn" data-close style="width:100%;margin-top:12px">Got it</button>');
-  }
-  async function installApp() {
-    if (standalone() || appInstalled) { toast('Adam Nokia is already installed on this device.', 'ok'); return; }
-    if (deferredInstallPrompt) {
-      const promptEvent = deferredInstallPrompt; deferredInstallPrompt = null;
-      try { await promptEvent.prompt(); const choice = await promptEvent.userChoice; if (choice && choice.outcome === 'accepted') toast('Installation started.', 'ok'); }
-      catch (e) { installHelp(); }
-      bindInstallButton(); return;
-    }
-    installHelp();
-  }
-  function bindInstallButton() {
-    const b = $('#install'); if (!b) return;
-    b.textContent = standalone() || appInstalled ? 'App installed' : 'Install app';
-    b.disabled = standalone() || appInstalled;
-    b.onclick = installApp;
-  }
   const CFG = window.ANE_CONFIG || {};
   const net = { reachable: true, syncing: false, lastSync: null, stale: false, snapAt: null };
   const state = { cart: {}, cust: 'CUS-WALKIN', method: 'ZAAD_USD', txn: null, q: '', cat: '', branch: 'BR-1', showDone: false, invQ: '', invCat: '' };
@@ -163,9 +136,7 @@
       <label>${setup ? 'New password (8+ characters)' : 'Password'}</label><input id="p" type="password" autocomplete="${setup ? 'new-password' : 'current-password'}">
       ${setup ? '<label>Repeat password</label><input id="p2" type="password" autocomplete="new-password">' : ''}
       <button class="btn" id="go" style="width:100%;margin-top:16px">${setup ? 'Save & sign in' : 'Sign in'}</button>
-      <p class="sm" style="text-align:center;margin-top:14px"><a href="#" id="sw">${setup ? '← Back to sign in' : 'First time? I have a setup code'}</a></p>
-      <button class="btn sec" id="install" style="width:100%;margin-top:10px">Install app</button></div></div>`;
-    bindInstallButton();
+      <p class="sm" style="text-align:center;margin-top:14px"><a href="#" id="sw">${setup ? '← Back to sign in' : 'First time? I have a setup code'}</a></p></div></div>`;
     $('#sw').onclick = e => { e.preventDefault(); loginView(setup ? null : 'setup'); };
     const go = async () => {
       const username = $('#u').value.trim().toLowerCase(), password = $('#p').value; $('#go').disabled = true;
@@ -187,10 +158,10 @@
     const pg = PAGES[route];
     $('#app').innerHTML = `<div class="shell"><aside class="side"><div class="brand"><img src="assets/logo/AdamNokia_Secondary_Horizontal_Reversed_White.svg" width="190" alt="Adam Nokia Electronics"></div>
       ${nav.map(n => `<a href="#${n[0]}" class="${n[0] === route ? 'on' : ''}"><span class="ic">${n[2]}</span>${n[1]}</a>`).join('')}<div class="grow"></div><div class="me">${esc(S.me.name)}<br>${esc(S.me.role)}</div><a href="#" id="lo"><span class="ic">⎋</span>Sign out</a></aside>
-      <div class="main"><div class="top"><h1>${pg.title}</h1><button class="btn sec sm" id="install" type="button">Install app</button><span class="pill" id="net" role="button" tabindex="0" title="Sync status" style="cursor:pointer"></span></div>${net.stale ? `<div class="notice" style="margin:10px 14px 0">⚠ <b>Offline</b> — showing data last synced ${dt(new Date(net.snapAt).toISOString())}. Stock and balances may be out of date. Sales and payments you record are saved on this device and sent automatically when you are back online.</div>` : ''}<div class="page" id="page">${pg.html()}</div></div>
+      <div class="main"><div class="top"><h1>${pg.title}</h1><span class="pill" id="net" role="button" tabindex="0" title="Sync status" style="cursor:pointer"></span></div>${net.stale ? `<div class="notice" style="margin:10px 14px 0">⚠ <b>Offline</b> — showing data last synced ${dt(new Date(net.snapAt).toISOString())}. Stock and balances may be out of date. Sales and payments you record are saved on this device and sent automatically when you are back online.</div>` : ''}<div class="page" id="page">${pg.html()}</div></div>
       <nav class="bottom">${nav.slice(0, 5).map(n => `<a href="#${n[0]}" class="${n[0] === route ? 'on' : ''}"><span class="ic">${n[2]}</span>${n[1]}</a>`).join('')}<a href="#settings" class="${route === 'settings' ? 'on' : ''}"><span class="ic">⚙</span>More</a></nav></div>`;
     $('#lo').onclick = async e => { e.preventDefault(); try { await api('auth.logout'); } catch (x) { } if (token) logoutLocal(); };
-    bindInstallButton(); updateStatus(); $('#net').onclick = syncModal;
+    updateStatus(); $('#net').onclick = syncModal;
     if (pg.bind) pg.bind();
   }
 
